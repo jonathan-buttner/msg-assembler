@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"errors"
 	"io"
 )
 
@@ -20,7 +19,7 @@ func CreateFragHeader(reader io.Reader) (*FragmentHdr, error) {
 	var flags uint16
 	var err error
 	if err = binary.Read(reader, binary.BigEndian, &flags); err != nil {
-		return nil, errors.New("unable to read flags")
+		return nil, err
 	}
 
 	if flags > 0 {
@@ -30,14 +29,15 @@ func CreateFragHeader(reader io.Reader) (*FragmentHdr, error) {
 	}
 
 	if err = binary.Read(reader, binary.BigEndian, &hdr.DataLen); err != nil {
-		return nil, errors.New("unable to read data len")
-	}
-	if err = binary.Read(reader, binary.BigEndian, &hdr.TransID); err != nil {
-		return nil, errors.New("unable to read transaction ID")
+		return nil, err
 	}
 	if err = binary.Read(reader, binary.BigEndian, &hdr.Offset); err != nil {
-		return nil, errors.New("unable to read offset")
+		return nil, err
 	}
+	if err = binary.Read(reader, binary.BigEndian, &hdr.TransID); err != nil {
+		return nil, err
+	}
+
 	return hdr, nil
 }
 
@@ -60,7 +60,7 @@ func CreateFragment(reader io.Reader) (*Fragment, error) {
 	frag.FragmentHdr = *hdr
 	data := make([]byte, frag.DataLen)
 	if err = binary.Read(reader, binary.BigEndian, data); err != nil {
-		return nil, errors.New("unable to read the data")
+		return nil, err
 	}
 	frag.Data = data
 	return frag, nil

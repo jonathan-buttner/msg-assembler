@@ -18,8 +18,9 @@ func createHdr(flag bool, dataLen uint16, transID uint32, offset uint32) *bytes.
 
 	binary.Write(b, binary.BigEndian, flags)
 	binary.Write(b, binary.BigEndian, dataLen)
-	binary.Write(b, binary.BigEndian, transID)
 	binary.Write(b, binary.BigEndian, offset)
+	binary.Write(b, binary.BigEndian, transID)
+
 	return b
 }
 
@@ -53,6 +54,13 @@ func createHdrErr(errType int) *bytes.Buffer {
 	}
 	var dataLen uint16 = 1
 	binary.Write(b, binary.BigEndian, dataLen)
+
+	if errType == errOffset {
+		return b
+	}
+	var offset uint32 = 10
+	binary.Write(b, binary.BigEndian, offset)
+
 	if errType == errTransID {
 		return b
 	}
@@ -61,8 +69,7 @@ func createHdrErr(errType int) *bytes.Buffer {
 	if errType == errOffset {
 		return b
 	}
-	var offset uint32 = 10
-	binary.Write(b, binary.BigEndian, offset)
+
 	return b
 }
 
@@ -132,7 +139,7 @@ func TestCreateFragment(t *testing.T) {
 	}
 	reader = createHdrErr(errFlags)
 	frag, err = CreateFragment(reader)
-	if err.Error() != "unable to read flags" {
+	if err == nil {
 		t.Error("expected an error when creating the header")
 	}
 }
