@@ -1,6 +1,20 @@
 # msg-assembler
 I attempted the Multi-threading extra credit.
 
+## Development Environment
+I developped and tested on an Ubuntu 16.04 machine using go version go1.10.3 linux/amd64.
+
+## To Build
+```sh
+./build.sh
+```
+This will produce a binary called `msg-assembler`.
+
+## To Run
+```sh
+./msg-assembler
+```
+
 ## Design
 The data model I chose for handling the fragments of a message is multiple
 hash maps and a binary tree. When a fragment is received by the server.go module
