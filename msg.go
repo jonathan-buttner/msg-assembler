@@ -126,12 +126,20 @@ func (m *Msg) HasAllFrags() bool {
 // the offset of the hole and
 func (m *Msg) GetHoles(cb func(transID uint32, startHoleOff uint32)) {
 	offArr := m.fragTree.InOrderArr()
+	if offArr[0].(*Fragment).Offset != 0 {
+		cb(m.transID, 0)
+	}
 	for i := 0; i < len(offArr)-1; i++ {
 		curFrag := offArr[i].(*Fragment)
 		hole := curFrag.Offset + uint32(curFrag.DataLen)
+
 		if hole != offArr[i+1].(*Fragment).Offset {
 			cb(m.transID, hole)
 		}
+	}
+	endFrag := offArr[len(offArr)-1].(*Fragment)
+	if !endFrag.IsEnd {
+		cb(m.transID, endFrag.Offset+uint32(endFrag.DataLen))
 	}
 }
 

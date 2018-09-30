@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"testing"
 )
 
@@ -171,12 +173,44 @@ func TestMsgGetHoles(t *testing.T) {
 		t.Error("expected two holes")
 	}
 	if holes[0] != 10 {
-		t.Error("expected hole at offset 50")
+		t.Error("expected hole at offset 10")
 	}
 	if holes[1] != 100 {
-		t.Error("expected hole at offset 50")
+		t.Error("expected hole at offset 100")
 	}
 }
+
+// TestGetHolesNoFinal checks to see if a hole is printed for the
+// greatest calculated offset when the final message isnt' received.
+func TestGetHolesNoFinal(t *testing.T) {
+	m := createMsgHelper()
+	holes := make([]uint32, 0)
+	m.GetHoles(func(transID, off uint32) {
+		holes = append(holes, off)
+	})
+	if len(holes) != 1 {
+		t.Error("there should be a hole at the end")
+	}
+}
+
+// TestGetHolesNoStartNoEnd checks to see if a hole is exists for the
+// beginning and end.
+func TestGetHolesNoStartNoEnd(t *testing.T) {
+	f := createValidFrag(false, 0, 10, make([]byte, 100))
+	m := NewMsg(f)
+	holes := make([]uint32, 0)
+	m.GetHoles(func(transID, off uint32) {
+		holes = append(holes, off)
+	})
+	if holes[0] != 0 {
+		t.Error("should have identified a hole at offset 0")
+	}
+	if holes[1] != 110 {
+		t.Error("should have identified a hole at offset 110")
+	}
+}
+
+// TestGetHolesOnlyEnd checks to see if a hole exists
 
 func createCompleteMsgUnOrdered() *Msg {
 	// 5 - 6
@@ -203,6 +237,7 @@ func TestMsgNoHoles(t *testing.T) {
 	})
 }
 
+// TestMsgGetSha256 tests that GetSha256 creates the sha256 hash correctly.
 func TestMsgGetSha256(t *testing.T) {
 	m := createCompleteMsgUnOrdered()
 	sh, _ := m.GetSha256()
@@ -214,5 +249,36 @@ func TestMsgGetSha256(t *testing.T) {
 	sh, err := m.GetSha256()
 	if sh != "" || err == nil {
 		t.Error("expected an error since all the fragments haven't arrived")
+	}
+}
+
+func memsetSlice(buf []byte, c byte) {
+	for i := range buf {
+		buf[i] = c
+	}
+}
+
+// TestMsgGetSha256NonZero tests that GetSha256 creates the sha256 hash correctly
+// for data that's non zero.
+func TestMsgGetSha256NonZero(t *testing.T) {
+	d1 := make([]byte, 50)
+	memsetSlice(d1, 1)
+	d2 := make([]byte, 50)
+	memsetSlice(d2, 2)
+	f := createValidFrag(true, 0, 100, d2)
+	f2 := createValidFrag(false, 0, 50, d1)
+	f3 := createValidFrag(false, 0, 0, d2)
+
+	m := NewMsg(f)
+	m.AddFragment(f3)
+	m.AddFragment(f2)
+	sh, _ := m.GetSha256()
+	h := sha256.New()
+	h.Write(d2)
+	h.Write(d1)
+	h.Write(d2)
+	exp := hex.EncodeToString(h.Sum(nil))
+	if exp != sh {
+		t.Error("sha256 didn't match")
 	}
 }
