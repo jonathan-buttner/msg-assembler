@@ -1,1 +1,1 @@
-module github.com/deadaccurate/msg-assembler
+module github.com/jonathan-buttner/msg-assembler

@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/deadaccurate/msg-assembler/tree"
+	"github.com/jonathan-buttner/msg-assembler/tree"
 )
 
 const (
